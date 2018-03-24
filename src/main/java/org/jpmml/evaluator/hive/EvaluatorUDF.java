@@ -18,10 +18,14 @@
  */
 package org.jpmml.evaluator.hive;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.bind.JAXBException;
+import javax.xml.transform.Source;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -36,11 +40,19 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.dmg.pmml.DataType;
 import org.dmg.pmml.FieldName;
+import org.dmg.pmml.PMML;
 import org.jpmml.evaluator.Evaluator;
+import org.jpmml.evaluator.EvaluatorUtil;
 import org.jpmml.evaluator.FieldValue;
 import org.jpmml.evaluator.InputField;
+import org.jpmml.evaluator.ModelEvaluatorFactory;
 import org.jpmml.evaluator.ResultField;
 import org.jpmml.evaluator.TargetField;
+import org.jpmml.model.ImportFilter;
+import org.jpmml.model.JAXBUtil;
+import org.jpmml.model.visitors.LocatorTransformer;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 public class EvaluatorUDF extends GenericUDF {
 
@@ -227,7 +239,7 @@ public class EvaluatorUDF extends GenericUDF {
 			Object pmmlValue = result.get(resultField.getName());
 
 			if(resultField instanceof TargetField){
-				pmmlValue = org.jpmml.evaluator.EvaluatorUtil.decode(pmmlValue);
+				pmmlValue = EvaluatorUtil.decode(pmmlValue);
 			}
 
 			output[position] = pmmlValue;
@@ -250,7 +262,9 @@ public class EvaluatorUDF extends GenericUDF {
 	private Evaluator createEvaluator() throws Exception {
 		Resource resource = getResource();
 
-		return EvaluatorUtil.createEvaluator(resource);
+		try(InputStream is = resource.getInputStream()){
+			return createEvaluator(is);
+		}
 	}
 
 	public Resource getResource(){
@@ -310,5 +324,25 @@ public class EvaluatorUDF extends GenericUDF {
 			default:
 				return null;
 		}
+	}
+
+	static
+	private Evaluator createEvaluator(InputStream is) throws SAXException, JAXBException {
+		Source source = ImportFilter.apply(new InputSource(is));
+
+		PMML pmml = JAXBUtil.unmarshalPMML(source);
+
+		// If the SAX Locator information is available, then transform it to java.io.Serializable representation
+		LocatorTransformer locatorTransformer = new LocatorTransformer();
+		locatorTransformer.applyTo(pmml);
+
+		ModelEvaluatorFactory modelEvaluatorFactory = ModelEvaluatorFactory.newInstance();
+
+		Evaluator evaluator = modelEvaluatorFactory.newModelEvaluator(pmml);
+
+		// Perform self-testing
+		evaluator.verify();
+
+		return evaluator;
 	}
 }
