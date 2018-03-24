@@ -18,7 +18,7 @@
  */
 package org.jpmml.evaluator.hive;
 
-public class DecisionTreeIris extends PMMLGenericUDF {
+public class DecisionTreeIris extends EvaluatorUDF {
 
 	public DecisionTreeIris(){
 		super(new ArchiveResource("/DecisionTreeIris.pmml"){ /* Anonymous inner class */ });

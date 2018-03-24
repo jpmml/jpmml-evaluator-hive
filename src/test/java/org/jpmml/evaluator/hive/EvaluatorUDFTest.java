@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(StandaloneHiveRunner.class)
-public class PMMLGenericUDFTest {
+public class EvaluatorUDFTest {
 
 	@HiveSQL (
 		files = {}

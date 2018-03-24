@@ -42,7 +42,7 @@ import org.jpmml.evaluator.InputField;
 import org.jpmml.evaluator.ResultField;
 import org.jpmml.evaluator.TargetField;
 
-public class PMMLGenericUDF extends GenericUDF {
+public class EvaluatorUDF extends GenericUDF {
 
 	private Resource resource = null;
 
@@ -57,7 +57,7 @@ public class PMMLGenericUDF extends GenericUDF {
 	private List<Mapping<ResultField>> outputMappings = null;
 
 
-	public PMMLGenericUDF(Resource resource){
+	public EvaluatorUDF(Resource resource){
 		setResource(resource);
 	}
 

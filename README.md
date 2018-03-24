@@ -31,14 +31,14 @@ Add the runtime uber-JAR file to Apache Hive classpath:
 ADD JAR jpmml-evaluator-hive-runtime-1.0-SNAPSHOT.jar;
 ```
 
-Create a subclass of `org.jpmml.evaluator.hive.PMMLGenericUDF`:
+Create a subclass of `org.jpmml.evaluator.hive.EvaluatorUDF`:
 ```Java
 package com.mycompany;
 
 import org.jpmml.evaluator.hive.ArchiveResource;
-import org.jpmml.evaluator.hive.PMMLGenericUDF;
+import org.jpmml.evaluator.hive.EvaluatorUDF;
 
-public class DecisionTreeIris extends PMMLGenericUDF {
+public class DecisionTreeIris extends EvaluatorUDF {
 
 	public DecisionTreeiris(){
 		super(new ArchiveResource("/DecisionTreeIris.pmml"){ /* Anonymous inner class */ });
