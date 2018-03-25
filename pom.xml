@@ -58,6 +58,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>16.0</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
 			<version>${hadoop.version}</version>
@@ -72,10 +78,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>14.0</version>
-			<scope>test</scope>
+			<groupId>org.jpmml</groupId>
+			<artifactId>jpmml-codemodel</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>

@@ -54,6 +54,7 @@ import org.jpmml.model.visitors.LocatorTransformer;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+abstract
 public class EvaluatorUDF extends GenericUDF {
 
 	private Resource resource = null;

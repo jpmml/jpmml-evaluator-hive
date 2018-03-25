@@ -26,12 +26,18 @@ The build produces two JAR files:
 
 # Usage #
 
+### Configuring the runtime ###
+
 Add the runtime uber-JAR file to Apache Hive classpath:
 ```
 ADD JAR jpmml-evaluator-hive-runtime-1.0-SNAPSHOT.jar;
 ```
 
-Create a subclass of `org.jpmml.evaluator.hive.EvaluatorUDF`:
+The PMML model evaluation functionality is implemented by the `org.jpmml.evaluator.hive.EvaluatorUDF` UDF class. However, this is an abstract class, which needs to be subclassed and parameterized with model evaluator information before it can be used in Apache Hive queries.
+
+### Building PMML functions manually ###
+
+Create a subclass of the `EvaluatorUDF` UDF class:
 ```Java
 package com.mycompany;
 
@@ -51,19 +57,57 @@ public class DecisionTreeIris extends EvaluatorUDF {
 }
 ```
 
-Package this class together with the accompanying PMML document into a model JAR file.
+Package this class together with the accompanying PMML resource (and other supporting information such as the Service Loader configuration file) into a model JAR file:
+```
+$ unzip -l DecisionTreeIris.jar 
+Archive:  DecisionTreeIris.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+       25  03-25-2018 00:57   META-INF/MANIFEST.MF
+     4306  03-25-2018 00:57   DecisionTreeIris.pmml
+       30  03-25-2018 00:57   META-INF/services/org.jpmml.evaluator.hive.EvaluatorUDF
+      396  03-25-2018 00:57   com/mycompany/DecisionTreeIris.java
+      371  03-25-2018 00:57   com/mycompany/DecisionTreeIris$1.class
+      526  03-25-2018 00:57   com/mycompany/DecisionTreeIris.class
+---------                     -------
+     5654                     6 files
+```
+
+### Building PMML functions using the Archive Builder function ###
+
+The model JAR building functionality is implemented by the `org.jpmml.evaluator.hive.ArchiveBuilderUDF` UDF class.
+
+Define and inspect the Archive Builder function:
+```
+CREATE TEMPORARY FUNCTION BuildArchive AS 'org.jpmml.evaluator.hive.ArchiveBuilderUDF';
+
+DESCRIBE FUNCTION BuildArchive;
+DESCRIBE FUNCTION EXTENDED BuildArchive;
+```
+
+The Archive Builder function takes three strings values as input (the fully qualified name of the PMML UDF subclass, the paths to the PMML file and the model JAR file in local filesystem), and produces a string value (the absolute path to the model JAR file in local filesystem) as output:
+```
+SELECT BuildArchive('com.mycompany.DecisionTreeIris', '/path/to/DecisionTreeIris.pmml', '/path/to/DecisionTreeIris.jar');
+```
+
+### Defining PMML functions ###
 
 Add the model JAR file to Apache Hive classpath:
 ```
-ADD JAR DecisionTreeIris.jar;
+ADD JAR /path/to/DecisionTreeIris.jar;
 ```
 
-Define a function:
+Define and inspect the PMML function:
 ```
 CREATE TEMPORARY FUNCTION DecisionTreeIris AS 'com.mycompany.DecisionTreeIris';
 
+DESCRIBE FUNCTION DecisionTreeIris;
 DESCRIBE FUNCTION EXTENDED DecisionTreeIris;
 ```
+
+### Applying PMML functions ###
+
+All PMML functions take a named struct of primitive values as input, and produce another named struct as output.
 
 Load and score the Iris dataset:
 ```
