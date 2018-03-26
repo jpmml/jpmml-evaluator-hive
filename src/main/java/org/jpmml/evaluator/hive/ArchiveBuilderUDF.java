@@ -20,9 +20,17 @@ package org.jpmml.evaluator.hive;
 
 import java.io.File;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDF;
 
 public class ArchiveBuilderUDF extends UDF {
+
+	protected Log log = LogFactory.getLog(getClass());
+
+
+	public ArchiveBuilderUDF(){
+	}
 
 	public String evaluate(String className, String pmmlFile, String udfJarFile){
 		return evaluate(className, new File(pmmlFile), new File(udfJarFile));
@@ -35,6 +43,8 @@ public class ArchiveBuilderUDF extends UDF {
 
 			return udfJarFile.getAbsolutePath();
 		} catch(Exception e){
+			this.log.error("Failed to build", e);
+
 			return null;
 		}
 	}

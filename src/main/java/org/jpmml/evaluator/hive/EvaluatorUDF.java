@@ -27,6 +27,8 @@ import java.util.Map;
 import javax.xml.bind.JAXBException;
 import javax.xml.transform.Source;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
@@ -71,6 +73,8 @@ public class EvaluatorUDF extends GenericUDF {
 	private StructObjectInspector outputInspector = null;
 
 	private List<Mapping<ResultField>> outputMappings = null;
+
+	protected Log log = LogFactory.getLog(getClass());
 
 
 	public EvaluatorUDF(Resource resource){
@@ -173,7 +177,11 @@ public class EvaluatorUDF extends GenericUDF {
 			return null;
 		}
 
+		String message = null;
+
 		try {
+			message = "Failed to decode arguments";
+
 			Object[] input = (Object[])inputs[0].get();
 
 			Map<FieldName, FieldValue> arguments;
@@ -181,15 +189,25 @@ public class EvaluatorUDF extends GenericUDF {
 			try {
 				arguments = decodeInput(input);
 			} catch(IllegalArgumentException iae){
+				this.log.warn(message, iae);
+
 				return null;
 			}
 
+			message = "Failed to evaluate";
+
 			Map<FieldName, ?> result = evaluator.evaluate(arguments);
+
+			message = "Failed to encode results";
 
 			return encodeOutput(result);
 		} catch(EvaluationException ee){
+			this.log.warn(message, ee);
+
 			return null;
 		} catch(InvalidFeatureException | UnsupportedFeatureException fe){
+			this.log.error(message, fe);
+
 			throw new HiveException(fe);
 		}
 	}
