@@ -63,12 +63,14 @@ public class EvaluatorUDFTest {
 		assertEquals(expectedResults.length, results.size());
 
 		// XXX
-		Collections.reverse(results);
+		if((EvaluatorUDFTest.NULL).equals(results.get(0)) && !(EvaluatorUDFTest.NULL).equals(results.get(results.size() - 1))){
+			Collections.reverse(results);
+		}
 
 		for(int i = 0; i < expectedResults.length; i++){
 
 			if(expectedResults[i] == null){
-				assertEquals("NULL", results.get(i));
+				assertEquals(EvaluatorUDFTest.NULL, results.get(i));
 			} else
 
 			{
@@ -76,4 +78,6 @@ public class EvaluatorUDFTest {
 			}
 		}
 	}
+
+	public static final String NULL = "NULL";
 }
