@@ -41,13 +41,16 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.dmg.pmml.DataType;
 import org.dmg.pmml.FieldName;
 import org.dmg.pmml.PMML;
+import org.jpmml.evaluator.EvaluationException;
 import org.jpmml.evaluator.Evaluator;
 import org.jpmml.evaluator.EvaluatorUtil;
 import org.jpmml.evaluator.FieldValue;
 import org.jpmml.evaluator.InputField;
+import org.jpmml.evaluator.InvalidFeatureException;
 import org.jpmml.evaluator.ModelEvaluatorFactory;
 import org.jpmml.evaluator.ResultField;
 import org.jpmml.evaluator.TargetField;
+import org.jpmml.evaluator.UnsupportedFeatureException;
 import org.jpmml.model.ImportFilter;
 import org.jpmml.model.JAXBUtil;
 import org.jpmml.model.visitors.LocatorTransformer;
@@ -166,13 +169,29 @@ public class EvaluatorUDF extends GenericUDF {
 			throw new HiveException(e);
 		}
 
-		Object[] input = (Object[])inputs[0].get();
+		if(inputs == null || inputs.length != 1){
+			return null;
+		}
 
-		Map<FieldName, FieldValue> arguments = decodeInput(input);
+		try {
+			Object[] input = (Object[])inputs[0].get();
 
-		Map<FieldName, ?> result = evaluator.evaluate(arguments);
+			Map<FieldName, FieldValue> arguments;
 
-		return encodeOutput(result);
+			try {
+				arguments = decodeInput(input);
+			} catch(IllegalArgumentException iae){
+				return null;
+			}
+
+			Map<FieldName, ?> result = evaluator.evaluate(arguments);
+
+			return encodeOutput(result);
+		} catch(EvaluationException ee){
+			return null;
+		} catch(InvalidFeatureException | UnsupportedFeatureException fe){
+			throw new HiveException(fe);
+		}
 	}
 
 	private StructObjectInspector asStructOfPrimitivesInspector(ObjectInspector objectInspector){

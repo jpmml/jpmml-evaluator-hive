@@ -40,11 +40,13 @@ public class EvaluatorUDFTest {
 
 	@Test
 	public void evaluate(){
-		this.shell.execute("CREATE TEMPORARY TABLE Iris (Sepal_Length DOUBLE, Sepal_Width DOUBLE, Petal_Length DOUBLE, Petal_Width DOUBLE)");
+		this.shell.execute("CREATE TEMPORARY TABLE Iris (Sepal_Length DOUBLE, Sepal_Width DOUBLE, Petal_Length STRING, Petal_Width STRING)");
 
 		this.shell.execute("INSERT INTO Iris VALUES (5.1, 3.5, 1.4, 0.2)");
 		this.shell.execute("INSERT INTO Iris VALUES (7, 3.2, 4.7, 1.4)");
+		this.shell.execute("INSERT INTO Iris VALUES (-1, 3.2, 4.5, 1.5)");
 		this.shell.execute("INSERT INTO Iris VALUES (6.3, 3.3, 6, 2.5)");
+		this.shell.execute("INSERT INTO Iris VALUES (5.8, 2.7, \"puppy\", \"1.9\")");
 
 		this.shell.execute("CREATE TEMPORARY FUNCTION DecisionTreeIris AS '" + DecisionTreeIris.class.getName() + "'");
 
@@ -53,7 +55,9 @@ public class EvaluatorUDFTest {
 		String[][] expectedResults = {
 			{"setosa", "2"},
 			{"versicolor", "6"},
+			null,
 			{"virginica", "7"},
+			null
 		};
 
 		assertEquals(expectedResults.length, results.size());
@@ -62,7 +66,14 @@ public class EvaluatorUDFTest {
 		Collections.reverse(results);
 
 		for(int i = 0; i < expectedResults.length; i++){
-			assertEquals("{\"species\":\"" + expectedResults[i][0] + "\",\"node_id\":\"" + expectedResults[i][1] + "\"}", results.get(i));
+
+			if(expectedResults[i] == null){
+				assertEquals("NULL", results.get(i));
+			} else
+
+			{
+				assertEquals("{\"species\":\"" + expectedResults[i][0] + "\",\"node_id\":\"" + expectedResults[i][1] + "\"}", results.get(i));
+			}
 		}
 	}
 }
