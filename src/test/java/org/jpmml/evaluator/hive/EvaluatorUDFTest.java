@@ -18,6 +18,7 @@
  */
 package org.jpmml.evaluator.hive;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,33 +51,19 @@ public class EvaluatorUDFTest {
 
 		this.shell.execute("CREATE TEMPORARY FUNCTION DecisionTreeIris AS '" + DecisionTreeIris.class.getName() + "'");
 
-		List<String> results = this.shell.executeQuery("SELECT DecisionTreeIris(named_struct('Sepal_Length', Sepal_Length, 'Sepal_Width', Sepal_Width, 'Petal_Length', Petal_Length, 'Petal_Width', Petal_Width)) FROM Iris");
+		List<String> results = new ArrayList<>();
+		results.add("{\"species\":\"setosa\",\"node_id\":\"2\"}");
+		results.add("{\"species\":\"versicolor\",\"node_id\":\"6\"}");
+		results.add(EvaluatorUDFTest.NULL);
+		results.add("{\"species\":\"virginica\",\"node_id\":\"7\"}");
+		results.add(EvaluatorUDFTest.NULL);
 
-		String[][] expectedResults = {
-			{"setosa", "2"},
-			{"versicolor", "6"},
-			null,
-			{"virginica", "7"},
-			null
-		};
+		// The ordering of query results may be random
+		List<String> queryResults = this.shell.executeQuery("SELECT DecisionTreeIris(named_struct('Sepal_Length', Sepal_Length, 'Sepal_Width', Sepal_Width, 'Petal_Length', Petal_Length, 'Petal_Width', Petal_Width)) FROM Iris");
 
-		assertEquals(expectedResults.length, results.size());
+		results.removeAll(queryResults);
 
-		// XXX
-		if((EvaluatorUDFTest.NULL).equals(results.get(0)) && !(EvaluatorUDFTest.NULL).equals(results.get(results.size() - 1))){
-			Collections.reverse(results);
-		}
-
-		for(int i = 0; i < expectedResults.length; i++){
-
-			if(expectedResults[i] == null){
-				assertEquals(EvaluatorUDFTest.NULL, results.get(i));
-			} else
-
-			{
-				assertEquals("{\"species\":\"" + expectedResults[i][0] + "\",\"node_id\":\"" + expectedResults[i][1] + "\"}", results.get(i));
-			}
-		}
+		assertEquals(Collections.emptyList(), results);
 	}
 
 	public static final String NULL = "NULL";
